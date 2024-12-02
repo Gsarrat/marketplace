@@ -1,12 +1,45 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<nav class="navbar bg-body-tertiary">
+    <div class="container-fluid">
+      <a class="navbar-brand">Navbar</a>
+      <form class="d-flex" role="search">
+        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-success" type="submit">Search</button>
+        <div class="mt-4">
+            {% if 'user' in session %}
+            <p>Bem-vindo, {{ session['user'] }}</p>
+            <a href="{{ url_for('logout') }}">Logout</a>
+            {% endif %}
+        </div>
+      </form>
+    </div>
+  </nav>
+
 <div class="container text-center mt-5">
-    <h1>Bem-vindo ao Nosso Site!</h1>
-    <div class="mt-4">
-        <a href="#" class="btn btn-primary btn-lg">Consulte Agora</a>
-        <a href="{{ url_for('login') }}" class="btn btn-secondary btn-lg">Login</a>
-        <a href="{{ url_for('register') }}" class="btn btn-success btn-lg">Cadastre-se</a>
+    <h1>O-Listic</h1>
+
+</div>
+<div class="container mt-5">
+    <h2 class="mb-4">Produtos Disponíveis</h2>
+    <div class="row">
+        {% for produto in produtos %}
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <!-- Exemplo de imagem estática. Substitua 'produto.jpg' pelo caminho correto -->
+                <img src="{{ url_for('static', filename='images/produto.jpg') }}" class="card-img-top" alt="{{ produto[1] }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ produto[1] }}</h5>
+                    <p class="card-text">R$ {{ "%.2f"|format(produto[2]) }}</p>
+                    <a href="#" class="btn btn-primary">Comprar</a>
+                    <a href="#" class="btn btn-primary">Add Carrinho</a>
+
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
 </div>
+
 {% endblock %}
