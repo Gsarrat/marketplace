@@ -10,20 +10,34 @@ app.secret_key = 'sua_chave_secreta'
 def landing():
     return render_template('landing.html')
 
-@app.route('/index')
+@app.route('/index', methods=['GET', 'POST'])
 def index():
     if 'user' not in session:
         flash('Por favor, faça login primeiro.', 'danger')
         return redirect(url_for('login'))
-    
+
+    search_query = request.form.get('search', '')  # Captura o termo de busca
+
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT id_produto, nome_produto, vlr_produto FROM produtos')
-    produtos = cursor.fetchall()  
+
+    # Busca produtos com ou sem filtro de pesquisa
+    if search_query:
+        cursor.execute('SELECT id_produto, nome_produto, vlr_produto, descricao_produto, imagem_produto FROM produtos WHERE nome_produto LIKE ?', ('%' + search_query + '%',))
+    else:
+        cursor.execute('SELECT id_produto, nome_produto, vlr_produto, descricao_produto, imagem_produto FROM produtos')
+    
+    produtos = cursor.fetchall()
+
+    # Pega o nome do usuário logado
+    cpf = session['user']
+    cursor.execute('SELECT nome_usuario FROM users WHERE cpf = ?', (cpf,))
+    user = cursor.fetchone()
+    nome_usuario = user[0] if user else 'Usuário'
+    
     conn.close()
 
-
-    return render_template('index.html', produtos=produtos)
+    return render_template('index.html', produtos=produtos, nome_usuario=nome_usuario)
 
 @app.route('/logout')
 def logout():
@@ -68,27 +82,23 @@ def login():
     if request.method == 'POST':
         cpf = request.form['cpf']
         password = request.form['password']
-        print(f"CPF recebido: {cpf}, Senha recebida: {password}")  # Depuração
+
 
         conn = sqlite3.connect('users.db')
         cursor = conn.cursor()
         cursor.execute('SELECT password FROM users WHERE cpf = ?', (cpf,))
         user = cursor.fetchone()
         conn.close()
-        print(f"Usuário encontrado: {user}")  # Depuração
+
 
         if user:
             stored_hash = user[0]
-            print("Senha armazenada no banco:", stored_hash)  # Depuração
+
             # Verifica se a senha recebida corresponde ao hash no banco
             if check_password_hash(stored_hash, password):
                 session['user'] = cpf
-                print("Login realizado com sucesso!")  # Depuração
+
                 return redirect(url_for('index'))
-            else:
-                print("Senha incorreta!")  # Depuração
-        else:
-            print("Usuário não encontrado!")  # Depuração
 
         flash('CPF ou senha incorretos.', 'danger')
 
