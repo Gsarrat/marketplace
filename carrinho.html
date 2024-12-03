@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Carrinho de Compras</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Preço Unitário</th>
+                <th>Quantidade</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens_carrinho %}
+            <tr>
+                <td>{{ item[1] }}</td>
+                <td>R$ {{ "%.2f"|format(item[2]) }}</td>
+                <td>{{ item[3] }}</td>
+                <td>R$ {{ "%.2f"|format(item[4]) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h3>Total: R$ {{ "%.2f"|format(total) }}</h3>
+
+    <form method="POST" action="{{ url_for('finalizar_pedido') }}">
+        <label for="metodo_pagamento">Método de Pagamento:</label>
+        <select name="metodo_pagamento" class="form-control" required>
+            <option value="creditos">Créditos do site</option>
+            <option value="gateway">Pagamento externo</option>
+        </select>
+
+        <label for="creditos_utilizados">Créditos a utilizar:</label>
+        <input type="number" step="0.01" max="{{ qt_coins }}" name="creditos_utilizados" class="form-control">
+
+        <button type="submit" class="btn btn-primary mt-3">Finalizar Pedido</button>
+    </form>
+</div>
+{% endblock %}

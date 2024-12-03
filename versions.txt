@@ -1,0 +1,10 @@
+0.0.4 - 
+    -add carteira de creditos in index.html
+    -add coluna in db.users - users - Qt_coins
+    -add novo arquivo payment.py (esboco nao funcional)
+    -add novo arquivo payment.html (esboco nao funcional)
+    -add nova biblioteca 'mercadopago'
+
+    -rotas (carrinho, finalizar pedido)
+    -add carrinho.html
+
