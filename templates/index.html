@@ -1,72 +1,68 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block title %}Página Inicial{% endblock %}
 
 {% block content %}
-<nav class="navbar bg-body-tertiary">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-        <div class="d-flex">
-            {% if 'user' in session %}
-                <p class="mb-0 me-3">Bem-vindo, {{ nome_usuario }}</p>
-                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
-            {% endif %}
-        </div>
-
-        <div class="d-flex">
-            <form class="d-inline-flex" role="search" method="POST" action="{{ url_for('index') }}">
-                <input class="form-control me-2" type="search" name="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" type="submit">Buscar</button>
-            </form>
-        </div>
-        <div class="card border-success" style="max-width: 12rem;">
-            <div class="card-header">Dharma Coins
-                <a href="#" class="btn btn-primary">Comprar Coins</a>
-            </div>
-            <div class="card-body">
-                <p class="card-text">D$C {{ "%.2f"|format(qt_coins) }}</p>
-            </div>
-        </div>
+<!-- Menu horizontal -->
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('landing') }}">O-Listic</a>
+        <form class="d-flex" method="POST" action="{{ url_for('index') }}">
+            <input class="form-control me-2" type="search" name="search" placeholder="Buscar" aria-label="Search">
+            <button class="btn btn-outline-success" type="submit">Buscar</button>
+        </form>
     </div>
 </nav>
 
-<div class="container text-center mt-5">
-    <h1>O-Listic</h1>
-</div>
-
-<div class="container mt-5">
-    <h2 class="mb-4">Produtos Disponíveis</h2>
-    <div class="row">
-        {% for produto in produtos %}
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <!-- Usando a URL da imagem do banco -->
-                <img src="{{ produto[4] }}" class="card-img-top" alt="{{ produto[1] }}" style="width: 15rem; height: auto;">
-                <div class="card-body">
-                    <h5 class="card-title">{{ produto[1] }}</h5>
-                    <!-- Exibindo a descrição do produto -->
-                    <p class="card-descricao">{{ produto[3] }}</p>
-                    <p class="card-text">R$ {{ "%.2f"|format(produto[2]) }}</p>
-                    
-                    <!-- Botão para adicionar ao carrinho -->
-                    <form action="{{ url_for('add_carrinho') }}" method="POST" style="display:inline;">
-                        <input type="hidden" name="id_produto" value="{{ produto[0] }}">
-                        <input type="hidden" name="quantidade" value="1">
-                        <button type="submit" class="btn btn-primary">Add Carrinho</button>
-                    </form>
-
-                    <!-- Botão para comprar diretamente -->
-                    <form action="{{ url_for('comprar_direto') }}" method="POST" style="display:inline;">
-                        <input type="hidden" name="id_produto" value="{{ produto[0] }}">
-                        <input type="hidden" name="quantidade" value="1">
-                        <button type="submit" class="btn btn-success">Comprar</button>
-                    </form>
-                    
+<!-- Layout principal -->
+<div class="d-flex" style="height: 100vh; overflow: hidden;">
+    <!-- Menu vertical -->
+    <div class="bg-light border-end" style="width: 250px; padding: 20px;">
+        <!-- Usuário e Dharma Coins -->
+        {% if session.get('user') %}
+            <p class="fw-bold">Bem-vindo, {{ nome_usuario }}</p>
+        {% endif %}
+        <div class="card border-success mb-3">
+            <div class="card-header">Dharma Coins</div>
+            <div class="card-body">
+                <p class="card-text">D$C {{ "%.2f"|format(qt_coins) }}</p>
+                <a href="#" class="btn btn-primary btn-sm">Comprar Coins</a>
             </div>
         </div>
-        {% endfor %}
+
+        <!-- Itens do menu -->
+        <div class="nav flex-column">
+            <a href="{{ url_for('produtos') }}" class="btn btn-light text-start mb-2" data-page="produto.html">Produtos</a>
+            <a href="{{ url_for('gestao_usuarios') }}" class="btn btn-light text-start mb-2" data-page="gestao_usuarios.html">Gestão Usuários</a>
+            <a href="{{ url_for('gestao_produtos') }}" class="btn btn-light text-start mb-2" data-page="gestao_produtos.html">Gestão Produtos</a>
+            <a href="{{ url_for('gestao_vendedores') }}" class="btn btn-light text-start mb-2" data-page="gestao_vendedores.html">Gestão de Vendedores</a>
+            <a href="{{ url_for('gestao_valores') }}" class="btn btn-light text-start mb-2" data-page="gestao_valores.html">Gestão de Valores</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger text-start">Logout</a>
+        </div>
+    </div>
+
+    <!-- Container de conteúdo dinâmico -->
+    <div class="flex-grow-1 p-4" style="overflow-y: auto;" id="dynamic-content">
+        <h1>Bem-vindo ao O-Listic</h1>
+        <p>Selecione uma das opções no menu lateral para continuar.</p>
     </div>
 </div>
 
-<div class="container text-center mt-4">
-    <a href="{{ url_for('carrinho') }}" class="btn btn-outline-primary">Ir para o Carrinho</a>
-</div>
+<!-- Carregar jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<script>
+    // Carregar conteúdo dinâmico ao clicar nos links do menu
+    $(document).on('click', 'a[data-page]', function(e) {
+        e.preventDefault(); // Evita o recarregamento completo da página
+        const page = $(this).data('page'); // Obtém o nome da página a ser carregada
+        if (page) {
+            $('#dynamic-content').load(page, function(response, status, xhr) {
+                if (status === "error") {
+                    $('#dynamic-content').html("<p>Erro ao carregar a página.</p>");
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

@@ -16,12 +16,12 @@ def index():
         flash('Por favor, faça login primeiro.', 'danger')
         return redirect(url_for('login'))
 
-    search_query = request.form.get('search', '')  # Captura o termo de busca
+    search_query = request.form.get('search', '')  
 
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
 
-    # Busca produtos com ou sem filtro de pesquisa
+ 
     if search_query:
         cursor.execute('SELECT id_produto, nome_produto, vlr_produto, descricao_produto, imagem_produto FROM produtos WHERE nome_produto LIKE ?', ('%' + search_query + '%',))
     else:
@@ -64,7 +64,7 @@ def register():
         hashed_password = generate_password_hash(password)
 
         try:
-            conn = sqlite3.connect('users.db')
+            conn = sqlite3.connect('main.db')
             cursor = conn.cursor()
             cursor.execute('INSERT INTO users (email, cpf, password, nome_usuario) VALUES (?, ?, ?, ?)', (email, cpf, hashed_password, nome_usuario))
             conn.commit()
@@ -83,7 +83,7 @@ def login():
         password = request.form['password']
 
 
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect('main.db')
         cursor = conn.cursor()
         cursor.execute('SELECT password FROM users WHERE cpf = ?', (cpf,))
         user = cursor.fetchone()
@@ -103,6 +103,28 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/produtos')
+def produtos():
+    conn = sqlite3.connect('main.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT id_produto, nome_produto, vlr_produto, descricao_produto, imagem_produto FROM produtos')
+    produtos = cursor.fetchall()
+    conn.close()
+    return render_template('produtos.html', produtos=produtos)
+
+@app.route('/gestao_usuarios')
+def gestao_usuarios():
+    return
+@app.route('/gestao_produtos')
+def gestao_produtos():
+    return
+@app.route('/gestao_vendedores')
+def gestao_vendedores():
+    return
+@app.route('/gestao_valores')
+def gestao_valores():
+    return
+
 # Carrinho
 
 @app.route('/carrinho', methods=['GET', 'POST'])
@@ -110,7 +132,7 @@ def carrinho():
     if 'user' not in session:
         flash('Por favor, faça login primeiro.', 'danger')
         return redirect(url_for('login'))
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
 
     # Seleciona os itens do carrinho do usuário
@@ -138,7 +160,7 @@ def finalizar_pedido():
     metodo_pagamento = request.form.get('metodo_pagamento')
     creditos_utilizados = float(request.form.get('creditos_utilizados', 0.00))
 
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
 
     cpf = session['user']
@@ -207,7 +229,7 @@ def add_carrinho():
     quantidade = int(request.form.get('quantidade', 1))
     cpf = session['user']
 
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
 
     # Verifica se o produto já está no carrinho do usuário
@@ -245,7 +267,7 @@ def comprar_direto():
     id_produto = request.form.get('id_produto')
     quantidade = int(request.form.get('quantidade', 1))
 
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
 
     # Busca os dados do produto
@@ -268,7 +290,9 @@ def comprar_direto():
     return redirect(url_for('finalizar_pedido'))
 
 
-
+@app.route('/nav_bar')
+def nav_bar():
+    return render_template('nav_bar.html')
 
 
 if __name__ == '__main__':

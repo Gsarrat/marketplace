@@ -1,0 +1,27 @@
+{% extends "index.html" %}
+
+{% block title %}Produtos{% endblock %}
+
+{% block content %}
+<!-- Menu lateral já incluso pelo index.html -->
+<div class="flex-grow-1 p-4" style="overflow-y: auto;">
+    <h2 class="mb-4">Produtos Disponíveis</h2>
+    <div class="row">
+        {% for produto in produtos %}
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <img src="{{ produto[4] }}" class="card-img-top" alt="{{ produto[1] }}" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ produto[1] }}</h5>
+                    <p class="card-text">R$ {{ "%.2f"|format(produto[2]) }}</p>
+                    <form action="{{ url_for('add_carrinho') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="id_produto" value="{{ produto[0] }}">
+                        <button type="submit" class="btn btn-primary">Adicionar ao Carrinho</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
