@@ -1,11 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta'
 
-# Página inicial
+def get_db_connection():
+    return sqlite3.connect('main.db')
+
+
 @app.route('/')
 def landing():
     return render_template('landing.html')
@@ -18,7 +21,7 @@ def index():
 
     search_query = request.form.get('search', '')  
 
-    conn = sqlite3.connect('main.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
 
  
@@ -33,8 +36,7 @@ def index():
     cursor.execute('SELECT nome_usuario, Qt_coins FROM users WHERE cpf = ?', (cpf,))
     user = cursor.fetchone()
     nome_usuario = user[0] if user else 'Usuário'
-    qt_coins = user[1] if user else 0  # Valor padrão caso não exista
-
+    qt_coins = user[1] if user else 0  
     conn.close()
     return render_template('index.html', produtos=produtos, nome_usuario=nome_usuario, qt_coins=qt_coins)
 
@@ -44,7 +46,7 @@ def logout():
     flash('Logout realizado com sucesso.', 'success')
     return redirect(url_for('landing'))
 
-# Cadastro
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -55,12 +57,12 @@ def register():
         password = request.form['password']
         confirm_password = request.form['confirm_password']
 
-        # Verifica se as senhas coincidem
+
         if password != confirm_password:
             flash('As senhas não coincidem!', 'danger')
             return redirect(url_for('register'))
 
-        # Hash da senha
+
         hashed_password = generate_password_hash(password)
 
         try:
@@ -93,7 +95,7 @@ def login():
         if user:
             stored_hash = user[0]
 
-            # Verifica se a senha recebida corresponde ao hash no banco
+
             if check_password_hash(stored_hash, password):
                 session['user'] = cpf
 
@@ -112,9 +114,110 @@ def produtos():
     conn.close()
     return render_template('produtos.html', produtos=produtos)
 
-@app.route('/gestao_usuarios')
+from flask import request, render_template, redirect, url_for, flash
+from math import ceil
+
+
+
+@app.route('/gestao_usuarios', methods=['GET'])
 def gestao_usuarios():
-    return
+    # Recupera os parâmetros de pesquisa, mas permite que sejam vazios inicialmente
+    cpf = request.args.get('cpf', '').strip()
+    nome = request.args.get('nome', '').strip()
+    email = request.args.get('email', '').strip()
+
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row  # Isso faz com que o cursor retorne resultados como dicionários
+    cursor = conn.cursor()
+
+    # Obtém o número da página a partir da query string, com valor padrão de 1
+    page = request.args.get('page', 1, type=int)
+
+    # Define a quantidade de usuários por página
+    users_per_page = 10
+
+    # Consulta para contar o número total de usuários, com ou sem filtros
+    query_count = "SELECT COUNT(*) FROM users WHERE 1=1"
+    params_count = []
+
+    if cpf:
+        query_count += " AND cpf LIKE ?"
+        params_count.append(f"%{cpf}%")
+    if nome:
+        query_count += " AND nome_usuario LIKE ?"
+        params_count.append(f"%{nome}%")
+    if email:
+        query_count += " AND email LIKE ?"
+        params_count.append(f"%{email}%")
+
+    # Executa a consulta para contar os usuários
+    cursor.execute(query_count, params_count)
+    total_users = cursor.fetchone()[0]
+
+    # Calcula o número total de páginas
+    total_pages = (total_users + users_per_page - 1) // users_per_page
+
+    # Consulta para pegar os usuários com base na página atual e filtros (se houver)
+    query = "SELECT id_user, cpf, nome_usuario, email FROM users WHERE 1=1"
+    params = []
+
+    if cpf:
+        query += " AND cpf LIKE ?"
+        params.append(f"%{cpf}%")
+    if nome:
+        query += " AND nome_usuario LIKE ?"
+        params.append(f"%{nome}%")
+    if email:
+        query += " AND email LIKE ?"
+        params.append(f"%{email}%")
+
+    # Adiciona a cláusula LIMIT para a paginação
+    query += " LIMIT ? OFFSET ?"
+    params.append(users_per_page)
+    params.append((page - 1) * users_per_page)
+
+    # Executa a consulta para pegar os usuários
+    cursor.execute(query, params)
+    usuarios = cursor.fetchall()
+
+    print("Usuários encontrados:", usuarios)
+
+    # Fecha a conexão com o banco de dados
+    conn.close()
+
+    # Retorna a página com os dados
+    return render_template('gestao_usuarios.html', usuarios=usuarios, page=page, total_pages=total_pages, cpf=cpf, nome=nome, email=email)
+
+
+
+@app.route('/editar_usuario', methods=['POST'])
+def editar_usuario():
+    user_id = request.form.get('id')
+    cpf = request.form.get('cpf').strip()
+    nome = request.form.get('nome').strip()
+    email = request.form.get('email').strip()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id_user FROM users WHERE id_user = ?", (user_id,))
+    usuario = cursor.fetchone()
+
+    if not usuario:
+        flash('Usuário não encontrado!', 'danger')
+        return jsonify({'status': 'error', 'message': 'Usuário não encontrado!'}), 400
+
+    try:
+        cursor.execute("UPDATE users SET cpf = ?, nome_usuario = ?, email = ? WHERE id_user = ?",
+                       (cpf, nome, email, user_id))
+        conn.commit()
+        return jsonify({'status': 'success', 'message': 'Usuário atualizado com sucesso!'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Erro ao atualizar o usuário: {str(e)}'}), 400
+    finally:
+        conn.close()
+
+
 @app.route('/gestao_produtos')
 def gestao_produtos():
     return
@@ -125,7 +228,15 @@ def gestao_vendedores():
 def gestao_valores():
     return
 
-# Carrinho
+
+
+
+
+
+
+
+
+# carrinho em teste
 
 @app.route('/carrinho', methods=['GET', 'POST'])
 def carrinho():
@@ -135,7 +246,7 @@ def carrinho():
     conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
 
-    # Seleciona os itens do carrinho do usuário
+
     cpf = session['user']
     cursor.execute("""
         SELECT c.id_produto, p.nome_produto, p.vlr_produto, c.quantidade, (p.vlr_produto * c.quantidade) AS subtotal 
@@ -145,7 +256,6 @@ def carrinho():
     """, (cpf,))
     itens_carrinho = cursor.fetchall()
 
-    # Calcula o total do carrinho
     total = sum(item[4] for item in itens_carrinho)
 
     conn.close()
@@ -165,7 +275,7 @@ def finalizar_pedido():
 
     cpf = session['user']
 
-    # Busca os itens do carrinho do usuário
+
     cursor.execute("""
         SELECT c.id_produto, p.vlr_produto, c.quantidade, (p.vlr_produto * c.quantidade) AS subtotal 
         FROM carrinho c
@@ -180,7 +290,7 @@ def finalizar_pedido():
 
     valor_total = sum(item[3] for item in itens_carrinho)
 
-    # Verifica saldo de créditos do usuário
+
     cursor.execute("SELECT Qt_coins FROM users WHERE cpf = ?", (cpf,))
     qt_coins = cursor.fetchone()[0]
     if creditos_utilizados > qt_coins:
@@ -189,7 +299,7 @@ def finalizar_pedido():
 
     valor_a_pagar_externo = max(0.00, valor_total - creditos_utilizados)
 
-    # Cria o pedido
+
     cursor.execute("""
         INSERT INTO pedidos (id_usuario, data_criacao, status_pedido, valor_total, metodo_pagamento, 
                              status_pagamento, creditos_utilizados, valor_a_pagar_externo, data_atualizacao)
@@ -197,7 +307,6 @@ def finalizar_pedido():
     """, (cpf, valor_total, metodo_pagamento, creditos_utilizados, valor_a_pagar_externo))
     id_pedido = cursor.lastrowid
 
-    # Adiciona os itens do pedido
     for item in itens_carrinho:
         id_produto, preco_unitario, quantidade, subtotal = item
         cursor.execute("""
@@ -205,12 +314,10 @@ def finalizar_pedido():
             VALUES (?, ?, ?, ?, ?)
         """, (id_pedido, id_produto, quantidade, preco_unitario, subtotal))
 
-    # Atualiza créditos do usuário
     cursor.execute("""
         UPDATE users SET Qt_coins = Qt_coins - ? WHERE cpf = ?
     """, (creditos_utilizados, cpf))
 
-    # Limpa o carrinho do usuário
     cursor.execute("DELETE FROM carrinho WHERE cpf_usuario = ?", (cpf,))
 
     conn.commit()
@@ -232,20 +339,17 @@ def add_carrinho():
     conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
 
-    # Verifica se o produto já está no carrinho do usuário
     cursor.execute("""
         SELECT quantidade FROM carrinho WHERE cpf_usuario = ? AND id_produto = ?
     """, (cpf, id_produto))
     item_existente = cursor.fetchone()
 
     if item_existente:
-        # Atualiza a quantidade do produto no carrinho
         nova_quantidade = item_existente[0] + quantidade
         cursor.execute("""
             UPDATE carrinho SET quantidade = ? WHERE cpf_usuario = ? AND id_produto = ?
         """, (nova_quantidade, cpf, id_produto))
     else:
-        # Adiciona o produto ao carrinho
         cursor.execute("""
             INSERT INTO carrinho (cpf_usuario, id_produto, quantidade)
             VALUES (?, ?, ?)
@@ -270,7 +374,6 @@ def comprar_direto():
     conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
 
-    # Busca os dados do produto
     cursor.execute("""
         SELECT id_produto, vlr_produto FROM produtos WHERE id_produto = ?
     """, (id_produto,))
@@ -283,7 +386,6 @@ def comprar_direto():
     id_produto, preco_unitario = produto
     subtotal = preco_unitario * quantidade
 
-    # Redireciona para a lógica de finalizar pedido com apenas este produto
     session['compra_direta'] = {'id_produto': id_produto, 'quantidade': quantidade, 'subtotal': subtotal}
 
     conn.close()

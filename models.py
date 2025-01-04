@@ -38,7 +38,6 @@ def init_db():
             );
         ''')
         
-        # Criação da tabela 'carrinho'
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS carrinho (
                 id_carrinho INTEGER,
@@ -51,7 +50,6 @@ def init_db():
             );
         ''')
         
-        # Criação da tabela 'pedidos'
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS pedidos (
                 id_pedido INTEGER NOT NULL UNIQUE,
@@ -71,7 +69,6 @@ def init_db():
             );
         ''')
         
-        # Criação da tabela 'itens_pedido'
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS itens_pedido (
                 id_item INTEGER NOT NULL,

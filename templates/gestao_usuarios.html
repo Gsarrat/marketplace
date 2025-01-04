@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Usuários{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Gestão de Usuários</h2>
+    
+    <!-- Barra de busca -->
+    <form action="{{ url_for('gestao_usuarios') }}" method="GET" class="mb-3">
+        <div class="row">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="cpf" placeholder="Buscar por CPF" value="{{ request.args.get('cpf', '') }}">
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="nome" placeholder="Buscar por Nome" value="{{ request.args.get('nome', '') }}">
+            </div>
+            <div class="col-md-4">
+                <input type="email" class="form-control" name="email" placeholder="Buscar por Email" value="{{ request.args.get('email', '') }}">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Buscar</button>
+    </form>
+
+    <!-- Tabela de resultados -->
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>CPF</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr ondblclick="openEditModal('{{ usuario.id_user }}', '{{ usuario.cpf }}', '{{ usuario.nome_usuario }}', '{{ usuario.email }}')">
+                        <td>{{ usuario.id_user }}</td>
+                        <td>{{ usuario.cpf }}</td>
+                        <td>{{ usuario.nome_usuario }}</td>
+                        <td>{{ usuario.email }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação -->
+    <nav aria-label="Paginação">
+        <ul class="pagination justify-content-center">
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('gestao_usuarios', page=page-1, **request.args) }}">Anterior</a>
+            </li>
+            {% endif %}
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('gestao_usuarios', page=p, **request.args) }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            {% if page < total_pages %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('gestao_usuarios', page=page+1, **request.args) }}">Próxima</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+<!-- Modal de edição do usuário -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editUserForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Editar Usuário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-user-id" name="id">
+                    <div class="mb-3">
+                        <label for="edit-user-cpf" class="form-label">CPF</label>
+                        <input type="text" class="form-control" id="edit-user-cpf" name="cpf" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-user-nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="edit-user-nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-user-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit-user-email" name="email" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Script -->
+<script>
+    // Função para abrir o modal com dados
+    function openEditModal(id, cpf, nome, email) {
+        document.getElementById('edit-user-id').value = id;
+        document.getElementById('edit-user-cpf').value = cpf;
+        document.getElementById('edit-user-nome').value = nome;
+        document.getElementById('edit-user-email').value = email;
+        new bootstrap.Modal(document.getElementById('editUserModal')).show();
+    }
+
+    // Submissão do formulário com AJAX
+    document.getElementById('editUserForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Impede o comportamento padrão de submissão
+
+        const formData = new FormData(this);
+
+        fetch('/editar_usuario', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message); // Mostrar a mensagem de sucesso
+                document.querySelector('#editUserModal .btn-close').click(); // Fechar o modal
+                location.reload(); // Atualizar a página para refletir as mudanças
+            } else {
+                alert(data.message); // Mostrar a mensagem de erro
+            }
+        })
+        .catch(error => {
+            alert('Erro na solicitação: ' + error);
+        });
+    });
+</script>
+{% endblock %}
