@@ -3,7 +3,6 @@
 {% block title %}Produtos{% endblock %}
 
 {% block content %}
-<!-- Menu lateral já incluso pelo index.html -->
 <div class="flex-grow-1 p-4" style="overflow-y: auto;">
     <h2 class="mb-4">Produtos Disponíveis</h2>
     <div class="row">
@@ -18,6 +17,10 @@
                         <input type="hidden" name="id_produto" value="{{ produto[0] }}">
                         <button type="submit" class="btn btn-primary">Adicionar ao Carrinho</button>
                     </form>
+                    <form action="{{ produto[5] }}" method="GET" style="display:inline;">
+                        <button type="submit" class="btn btn-secondary">Consultar</button>
+                    </form>
+                    
                 </div>
             </div>
         </div>

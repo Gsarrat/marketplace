@@ -6,7 +6,6 @@
 <div class="container mt-4">
     <h2>Gestão de Usuários</h2>
     
-    <!-- Barra de busca -->
     <form action="{{ url_for('gestao_usuarios') }}" method="GET" class="mb-3">
         <div class="row">
             <div class="col-md-4">
@@ -22,7 +21,6 @@
         <button type="submit" class="btn btn-primary mt-3">Buscar</button>
     </form>
 
-    <!-- Tabela de resultados -->
     <div class="table-responsive">
         <table class="table table-hover table-striped">
             <thead class="table-dark">
@@ -47,7 +45,6 @@
         </table>
     </div>
 
-    <!-- Paginação -->
     <nav aria-label="Paginação">
         <ul class="pagination justify-content-center">
             {% if page > 1 %}
@@ -69,7 +66,6 @@
     </nav>
 </div>
 
-<!-- Modal de edição do usuário -->
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -102,9 +98,7 @@
     </div>
 </div>
 
-<!-- Script -->
 <script>
-    // Função para abrir o modal com dados
     function openEditModal(id, cpf, nome, email) {
         document.getElementById('edit-user-id').value = id;
         document.getElementById('edit-user-cpf').value = cpf;
@@ -113,9 +107,8 @@
         new bootstrap.Modal(document.getElementById('editUserModal')).show();
     }
 
-    // Submissão do formulário com AJAX
     document.getElementById('editUserForm').addEventListener('submit', function(event) {
-        event.preventDefault(); // Impede o comportamento padrão de submissão
+        event.preventDefault(); 
 
         const formData = new FormData(this);
 
@@ -126,11 +119,11 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                alert(data.message); // Mostrar a mensagem de sucesso
-                document.querySelector('#editUserModal .btn-close').click(); // Fechar o modal
-                location.reload(); // Atualizar a página para refletir as mudanças
+                alert(data.message); 
+                document.querySelector('#editUserModal .btn-close').click();
+                location.reload(); 
             } else {
-                alert(data.message); // Mostrar a mensagem de erro
+                alert(data.message);
             }
         })
         .catch(error => {

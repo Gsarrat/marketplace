@@ -3,7 +3,6 @@
 {% block title %}Página Inicial{% endblock %}
 
 {% block content %}
-<!-- Menu horizontal -->
 <nav class="navbar navbar-light bg-light">
     <div class="container-fluid">
         <a class="navbar-brand" href="{{ url_for('landing') }}">O-Listic</a>
@@ -14,11 +13,8 @@
     </div>
 </nav>
 
-<!-- Layout principal -->
 <div class="d-flex" style="height: 100vh; overflow: hidden;">
-    <!-- Menu vertical -->
     <div class="bg-light border-end" style="width: 250px; padding: 20px;">
-        <!-- Usuário e Dharma Coins -->
         {% if session.get('user') %}
             <p class="fw-bold">Bem-vindo, {{ nome_usuario }}</p>
         {% endif %}
@@ -30,7 +26,6 @@
             </div>
         </div>
 
-        <!-- Itens do menu -->
         <div class="nav flex-column">
             <a href="#" class="btn btn-light text-start mb-2" data-page="{{ url_for('produtos') }}">Produtos</a>
             <a href="#" class="btn btn-light text-start mb-2" data-page="{{ url_for('gestao_usuarios') }}">Gestão Usuários</a>
@@ -41,21 +36,18 @@
         </div>
     </div>
 
-    <!-- Container de conteúdo dinâmico -->
     <div class="flex-grow-1 p-4" style="overflow-y: auto;" id="dynamic-content">
         <h1>Bem-vindo ao O-Listic</h1>
         <p>Selecione uma das opções no menu lateral para continuar.</p>
     </div>
 </div>
 
-<!-- Carregar jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
-    // Carregar conteúdo dinâmico ao clicar nos links do menu
     $(document).on('click', 'a[data-page]', function(e) {
-        e.preventDefault(); // Evita o recarregamento completo da página
-        const page = $(this).data('page'); // Obtém o nome da página a ser carregada
+        e.preventDefault(); 
+        const page = $(this).data('page'); 
         if (page) {
             $('#dynamic-content').load(page, function(response, status, xhr) {
                 if (status === "error") {

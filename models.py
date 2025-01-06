@@ -34,6 +34,7 @@ def init_db():
                 vlr_produto REAL,
                 descricao_produto TEXT,
                 imagem_produto TEXT,
+                link	TEXT,
                 PRIMARY KEY (id_produto AUTOINCREMENT)
             );
         ''')

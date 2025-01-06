@@ -1,9 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
+from produtos.tarot_utils import *
+from groq import Groq
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta'
+
+#api groq
+API_KEY = "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"
+client = Groq(api_key=API_KEY)
 
 def get_db_connection():
     return sqlite3.connect('main.db')
@@ -109,7 +115,8 @@ def login():
 def produtos():
     conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT id_produto, nome_produto, vlr_produto, descricao_produto, imagem_produto FROM produtos')
+    cursor.execute('SELECT id_produto, nome_produto, vlr_produto, descricao_produto, imagem_produto, link FROM produtos')
+
     produtos = cursor.fetchall()
     conn.close()
     return render_template('produtos.html', produtos=produtos)
@@ -121,22 +128,18 @@ from math import ceil
 
 @app.route('/gestao_usuarios', methods=['GET'])
 def gestao_usuarios():
-    # Recupera os parâmetros de pesquisa, mas permite que sejam vazios inicialmente
     cpf = request.args.get('cpf', '').strip()
     nome = request.args.get('nome', '').strip()
     email = request.args.get('email', '').strip()
 
     conn = get_db_connection()
-    conn.row_factory = sqlite3.Row  # Isso faz com que o cursor retorne resultados como dicionários
+    conn.row_factory = sqlite3.Row 
     cursor = conn.cursor()
 
-    # Obtém o número da página a partir da query string, com valor padrão de 1
     page = request.args.get('page', 1, type=int)
 
-    # Define a quantidade de usuários por página
     users_per_page = 10
 
-    # Consulta para contar o número total de usuários, com ou sem filtros
     query_count = "SELECT COUNT(*) FROM users WHERE 1=1"
     params_count = []
 
@@ -150,14 +153,11 @@ def gestao_usuarios():
         query_count += " AND email LIKE ?"
         params_count.append(f"%{email}%")
 
-    # Executa a consulta para contar os usuários
     cursor.execute(query_count, params_count)
     total_users = cursor.fetchone()[0]
 
-    # Calcula o número total de páginas
     total_pages = (total_users + users_per_page - 1) // users_per_page
 
-    # Consulta para pegar os usuários com base na página atual e filtros (se houver)
     query = "SELECT id_user, cpf, nome_usuario, email FROM users WHERE 1=1"
     params = []
 
@@ -171,21 +171,17 @@ def gestao_usuarios():
         query += " AND email LIKE ?"
         params.append(f"%{email}%")
 
-    # Adiciona a cláusula LIMIT para a paginação
     query += " LIMIT ? OFFSET ?"
     params.append(users_per_page)
     params.append((page - 1) * users_per_page)
 
-    # Executa a consulta para pegar os usuários
     cursor.execute(query, params)
     usuarios = cursor.fetchall()
 
     print("Usuários encontrados:", usuarios)
 
-    # Fecha a conexão com o banco de dados
     conn.close()
 
-    # Retorna a página com os dados
     return render_template('gestao_usuarios.html', usuarios=usuarios, page=page, total_pages=total_pages, cpf=cpf, nome=nome, email=email)
 
 
@@ -236,7 +232,6 @@ def gestao_valores():
 
 
 
-# carrinho em teste
 
 @app.route('/carrinho', methods=['GET', 'POST'])
 def carrinho():
@@ -395,6 +390,20 @@ def comprar_direto():
 @app.route('/nav_bar')
 def nav_bar():
     return render_template('nav_bar.html')
+
+
+
+
+
+# rotas dos produtos
+@app.route('/tarot_tres_cartas', methods=['GET', 'POST'])
+def tarot_tres_cartas():
+    resultado = None
+    if request.method == 'POST':
+        pergunta = request.form.get('pergunta')  
+        if pergunta:
+            resultado = jogar_tarot(pergunta, client)  
+    return render_template('produtos/tarot_tres_cartas.html', resultado=resultado)
 
 
 if __name__ == '__main__':

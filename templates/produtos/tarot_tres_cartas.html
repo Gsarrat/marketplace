@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Jogo de Tarot - Três Cartas</h1>
+    <form method="post">
+        <div class="mb-3">
+            <label for="pergunta" class="form-label">Digite sua pergunta para o Tarot:</label>
+            <input type="text" id="pergunta" name="pergunta" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Tirar as cartas</button>
+    </form>
+
+    {% if resultado %}
+    <div class="mt-4">
+        <h2>Cartas Sorteadas:</h2>
+        <ul>
+            {% for carta in resultado.cartas %}
+            <li><strong>{{ carta.nome }}</strong>: {{ carta.descricao }}</li>
+            {% endfor %}
+        </ul>
+        <h2>Interpretação:</h2>
+        <p>{{ resultado.interpretacao }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
