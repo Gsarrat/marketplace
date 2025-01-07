@@ -1,50 +1,68 @@
 import random
+import sqlite3
 
-CARTAS_TAROT_MARSELA = [
-    "O Louco", "O Mago", "A Suma Sacerdotisa", "A Imperatriz", "O Imperador", "O Papa",
-    "Os Amantes", "O Carro", "A Força", "O Eremita", "A Roda da Fortuna", "A Justiça",
-    "O Enforcado", "A Morte", "A Temperança", "O Diabo", "A Torre", "A Estrela",
-    "A Lua", "O Sol", "O Julgamento", "O Mundo"
-]
+# Caminho do banco de dados
+DB_PATH = 'main.db'
 
-SIGNIFICADOS_TAROT = {
-    "O Louco": "Novos começos, aventuras inesperadas, liberdade.",
-    "O Mago": "Habilidade, poder, ação, transformação.",
-    "A Suma Sacerdotisa": "Intuição, sabedoria, mistério, conhecimento oculto.",
-    "A Imperatriz": "Fertilidade, abundância, natureza, criatividade.",
-    "O Imperador": "Autoridade, estrutura, controle, estabilidade.",
-    "O Papa": "Tradição, espiritualidade, conselho, aprendizado.",
-    "Os Amantes": "Escolhas, união, harmonia, amor.",
-    "O Carro": "Vontade, determinação, sucesso, superação.",
-    "A Força": "Coragem, energia, dominação, compaixão.",
-    "O Eremita": "Solidão, introspecção, sabedoria, guia interior.",
-    "A Roda da Fortuna": "Mudança, destino, ciclos, sorte.",
-    "A Justiça": "Equilíbrio, justiça, verdade, imparcialidade.",
-    "O Enforcado": "Sacrifício, nova perspectiva, entrega, suspensão.",
-    "A Morte": "Transformação, fim de um ciclo, mudança profunda.",
-    "A Temperança": "Equilíbrio, paciência, moderação, harmonia.",
-    "O Diabo": "Apego, materialismo, tentação, vícios.",
-    "A Torre": "Destruição, revelações, mudança abrupta, choque.",
-    "A Estrela": "Esperança, inspiração, serenidade, renovação.",
-    "A Lua": "Ilusão, medo, sonhos, inconsciente.",
-    "O Sol": "Sucesso, alegria, vitalidade, clareza.",
-    "O Julgamento": "Ressurreição, renovação, julgamento, despertar.",
-    "O Mundo": "Realização, completude, sucesso, viagem."
-}
+def get_db_connection():
+    """Estabelece uma conexão com o banco de dados."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row  # Permite acesso por nome de coluna
+    return conn
+
+def fetch_cartas_do_banco():
+    """
+    Busca todas as cartas do banco de dados e retorna seus nomes, significados e referências de imagem.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT nome_arcano, significado, img_ref FROM info_arcanos")
+    cartas = cursor.fetchall()
+
+    conn.close()
+
+    # Retorna um dicionário com nome_arcano como chave e um dicionário com significado e img_ref como valor
+    return {carta['nome_arcano']: {'significado': carta['significado'], 'img_ref': carta['img_ref']} for carta in cartas}
 
 def sortear_cartas(cartas, qtd=3):
-    return random.sample(cartas, qtd)
+    """
+    Sorteia uma quantidade especificada de cartas de um conjunto fornecido.
+    """
+    if qtd > len(cartas):
+        raise ValueError(f"Não há cartas suficientes para sortear {qtd}. Total disponível: {len(cartas)}")
+    return random.sample(list(cartas.keys()), qtd)
 
-def criar_input_gpt(pergunta, cartas):
-    significados = [SIGNIFICADOS_TAROT[carta] for carta in cartas]
+def criar_input_gpt(pergunta, cartas, cartas_info):
+    """
+    Gera um prompt para o GPT com base na pergunta do usuário e nas cartas sorteadas.
+    """
+    significados = [cartas_info[carta]['significado'] for carta in cartas]
     return (
         f"Você é um especialista em Tarot. Uma pessoa fez a seguinte pergunta: '{pergunta}'. "
         f"As cartas sorteadas foram: {', '.join(cartas)}. "
         f"Os significados básicos dessas cartas são: {', '.join(significados)}. "
-        f"Baseado nisso, forneça uma interpretação detalhada e útil para essa pessoa."
+        f"Baseado nisso, forneça uma interpretação detalhada e útil para essa pessoa. "
+        f"A resposta deve ser estruturada em seis seções claras e separadas: "
+        f"- Interpretação da primeira carta (inter_cart_um). "
+        f"- Interpretação da segunda carta (inter_cart_dois). "
+        f"- Interpretação da terceira carta (inter_cart_tres). "
+        f"- Interpretação geral das cartas (inter_geral). "
+        f"- Conclusão (conclusao). "
+        f"- Dicas práticas (dicas). "
+        f"Por favor, formate a resposta no seguinte modelo: "
+        f"**Interpretação da primeira carta**: ... "
+        f"**Interpretação da segunda carta**: ... "
+        f"**Interpretação da terceira carta**: ... "
+        f"**Interpretação geral**: ... "
+        f"**Conclusão**: ... "
+        f"**Dicas práticas**: ... "
     )
 
 def consultar_gpt(prompt, client):
+    """
+    Consulta o modelo GPT para gerar uma interpretação baseada no prompt.
+    """
     completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
         model="llama-3.3-70b-versatile"
@@ -52,12 +70,50 @@ def consultar_gpt(prompt, client):
     return completion.choices[0].message.content
 
 def jogar_tarot(pergunta, client):
-    cartas_tiradas = sortear_cartas(CARTAS_TAROT_MARSELA)
-    prompt = criar_input_gpt(pergunta, cartas_tiradas)
+    """
+    Executa o jogo de Tarot, sorteando cartas e gerando uma interpretação.
+    """
+    cartas_info = fetch_cartas_do_banco()
+    cartas_tiradas = sortear_cartas(cartas_info)
+    prompt = criar_input_gpt(pergunta, cartas_tiradas, cartas_info)
     interpretacao = consultar_gpt(prompt, client)
 
     resultado = {
-        "cartas": [{"nome": carta, "descricao": SIGNIFICADOS_TAROT[carta]} for carta in cartas_tiradas],
+        "cartas": [
+            {
+                "nome": carta,
+                "descricao": cartas_info[carta]['significado'],
+                "img_ref": cartas_info[carta]['img_ref']
+            } 
+            for carta in cartas_tiradas
+        ],
         "interpretacao": interpretacao
     }
     return resultado
+
+
+def processar_interpretacao(interpretacao):
+    partes = {
+        "inter_cart_um": "",
+        "inter_cart_dois": "",
+        "inter_cart_tres": "",
+        "inter_geral": "",
+        "conclusao": "",
+        "dicas": ""
+    }
+
+    # Dividir a interpretação em seções com base no padrão do prompt
+    if "**Interpretação da primeira carta**" in interpretacao:
+        partes["inter_cart_um"] = interpretacao.split("**Interpretação da primeira carta**:")[1].split("**Interpretação da segunda carta**")[0].strip()
+    if "**Interpretação da segunda carta**" in interpretacao:
+        partes["inter_cart_dois"] = interpretacao.split("**Interpretação da segunda carta**:")[1].split("**Interpretação da terceira carta**")[0].strip()
+    if "**Interpretação da terceira carta**" in interpretacao:
+        partes["inter_cart_tres"] = interpretacao.split("**Interpretação da terceira carta**:")[1].split("**Interpretação geral**")[0].strip()
+    if "**Interpretação geral**" in interpretacao:
+        partes["inter_geral"] = interpretacao.split("**Interpretação geral**:")[1].split("**Conclusão**")[0].strip()
+    if "**Conclusão**" in interpretacao:
+        partes["conclusao"] = interpretacao.split("**Conclusão**:")[1].split("**Dicas práticas**")[0].strip()
+    if "**Dicas práticas**" in interpretacao:
+        partes["dicas"] = interpretacao.split("**Dicas práticas**:")[1].strip()
+
+    return partes

@@ -115,8 +115,11 @@ def login():
 def produtos():
     conn = sqlite3.connect('main.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT id_produto, nome_produto, vlr_produto, descricao_produto, imagem_produto, link FROM produtos')
-
+    cursor.execute('''
+        SELECT id_produto, nome_produto, vlr_produto, descricao_produto, imagem_produto, link 
+        FROM produtos
+        WHERE ativo = 1
+    ''')
     produtos = cursor.fetchall()
     conn.close()
     return render_template('produtos.html', produtos=produtos)
@@ -402,7 +405,9 @@ def tarot_tres_cartas():
     if request.method == 'POST':
         pergunta = request.form.get('pergunta')  
         if pergunta:
-            resultado = jogar_tarot(pergunta, client)  
+            bruto = jogar_tarot(pergunta, client)  
+            bruto["interpretacao"] = processar_interpretacao(bruto["interpretacao"])  
+            resultado = bruto
     return render_template('produtos/tarot_tres_cartas.html', resultado=resultado)
 
 

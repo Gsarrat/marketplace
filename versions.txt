@@ -1,3 +1,17 @@
+0.0.7 - 
+    -refatoracao de parte do codigo
+    -ajuste no produto
+    -add imagens das cartas
+    -ajuste na exibicao de imagens das cartas
+    -inclusao da coluna ativo de produto
+    -segregacao das sessoes da consulta
+
+0.0.6 - 
+    -inclusao do produto tarot de 3 cartas - tarot marseilhe
+
+0.0.5-
+    -minor bug fixes
+
 0.0.4 - 
     -add carteira de creditos in index.html
     -add coluna in db.users - users - Qt_coins

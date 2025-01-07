@@ -2,8 +2,8 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Jogo de Tarot - Três Cartas</h1>
-    <form method="post">
+    <h1 class="text-center mb-4">Jogo de Tarot - Três Cartas</h1>
+    <form method="post" class="mb-4">
         <div class="mb-3">
             <label for="pergunta" class="form-label">Digite sua pergunta para o Tarot:</label>
             <input type="text" id="pergunta" name="pergunta" class="form-control" required>
@@ -13,14 +13,26 @@
 
     {% if resultado %}
     <div class="mt-4">
-        <h2>Cartas Sorteadas:</h2>
-        <ul>
+        <h2 class="text-center">Cartas Sorteadas:</h2>
+        <div class="row">
             {% for carta in resultado.cartas %}
-            <li><strong>{{ carta.nome }}</strong>: {{ carta.descricao }}</li>
+            <div class="col-md-4 text-center">
+                <img src="{{ url_for('static', filename='images/arcanos/' ~ carta.img_ref) }}" alt="{{ carta.nome }}" class="img-fluid mb-2" style="max-height: 200px;">
+                <h5>{{ carta.nome }}</h5>
+                <p>{{ carta.descricao }}</p>
+            </div>
             {% endfor %}
-        </ul>
-        <h2>Interpretação:</h2>
-        <p>{{ resultado.interpretacao }}</p>
+        </div>
+
+        <h2 class="text-center mt-5">Interpretação</h2>
+        <div class="bg-light p-4 rounded shadow-sm">
+            <p><strong>Interpretação da primeira carta:</strong> {{ resultado.interpretacao.inter_cart_um }}</p>
+            <p><strong>Interpretação da segunda carta:</strong> {{ resultado.interpretacao.inter_cart_dois }}</p>
+            <p><strong>Interpretação da terceira carta:</strong> {{ resultado.interpretacao.inter_cart_tres }}</p>
+            <p><strong>Interpretação geral:</strong> {{ resultado.interpretacao.inter_geral }}</p>
+            <p><strong>Conclusão:</strong> {{ resultado.interpretacao.conclusao }}</p>
+            <p><strong>Dicas práticas:</strong> {{ resultado.interpretacao.dicas }}</p>
+        </div>
     </div>
     {% endif %}
 </div>
