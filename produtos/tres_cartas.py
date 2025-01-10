@@ -1,19 +1,14 @@
 import random
 import sqlite3
 
-# Caminho do banco de dados
 DB_PATH = 'main.db'
 
 def get_db_connection():
-    """Estabelece uma conexão com o banco de dados."""
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # Permite acesso por nome de coluna
+    conn.row_factory = sqlite3.Row  
     return conn
 
 def fetch_cartas_do_banco():
-    """
-    Busca todas as cartas do banco de dados e retorna seus nomes, significados e referências de imagem.
-    """
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -22,21 +17,14 @@ def fetch_cartas_do_banco():
 
     conn.close()
 
-    # Retorna um dicionário com nome_arcano como chave e um dicionário com significado e img_ref como valor
     return {carta['nome_arcano']: {'significado': carta['significado'], 'img_ref': carta['img_ref']} for carta in cartas}
 
 def sortear_cartas(cartas, qtd=3):
-    """
-    Sorteia uma quantidade especificada de cartas de um conjunto fornecido.
-    """
     if qtd > len(cartas):
         raise ValueError(f"Não há cartas suficientes para sortear {qtd}. Total disponível: {len(cartas)}")
     return random.sample(list(cartas.keys()), qtd)
 
 def criar_input_gpt(pergunta, cartas, cartas_info):
-    """
-    Gera um prompt para o GPT com base na pergunta do usuário e nas cartas sorteadas.
-    """
     significados = [cartas_info[carta]['significado'] for carta in cartas]
     return (
         f"Você é um especialista em Tarot. Uma pessoa fez a seguinte pergunta: '{pergunta}'. "
@@ -60,9 +48,6 @@ def criar_input_gpt(pergunta, cartas, cartas_info):
     )
 
 def consultar_gpt(prompt, client):
-    """
-    Consulta o modelo GPT para gerar uma interpretação baseada no prompt.
-    """
     completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
         model="llama-3.3-70b-versatile"
@@ -70,9 +55,6 @@ def consultar_gpt(prompt, client):
     return completion.choices[0].message.content
 
 def jogar_tarot(pergunta, client):
-    """
-    Executa o jogo de Tarot, sorteando cartas e gerando uma interpretação.
-    """
     cartas_info = fetch_cartas_do_banco()
     cartas_tiradas = sortear_cartas(cartas_info)
     prompt = criar_input_gpt(pergunta, cartas_tiradas, cartas_info)

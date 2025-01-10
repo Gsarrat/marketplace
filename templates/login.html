@@ -1,18 +1,29 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
 <div class="container mt-5">
-    <h2>Login</h2>
-    <form method="post" action="{{ url_for('login') }}">
-        <div class="mb-3">
-            <label for="cpf" class="form-label">CPF</label>
-            <input type="text" class="form-control" id="cpf" name="cpf" autocomplete="username" required>
+    <div class="row justify-content-center">
+        <div class="col-sm-11 col-lg-5">
+        <div class="card" >
+            <h2>Login</h2><br><br>
+            <form method="post" action="{{ url_for('login') }}">
+            <div class="mb-3">
+                <label for="cpf" class="form-label">CPF</label>
+                <input type="text" class="form-control" id="cpf" name="cpf" autocomplete="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
+            </div>
+            <div class="d-grid gap-2 col-6 mx-auto justify-content-md-end">
+                <button type="submit" class="btn btn-primary">Login</button>
+            </div>
+            </form>
+
+            </form>
         </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Senha</label>
-            <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Login</button>
-    </form>
+    </div>
+</div>
 </div>
 {% endblock %}

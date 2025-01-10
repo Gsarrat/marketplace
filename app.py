@@ -1,8 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
-from produtos.tarot_utils import *
 from groq import Groq
+
+# Importa Produtos
+from produtos.tres_cartas import *
+from produtos.caminho_semana import *
+
+
+
+
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta'
@@ -409,6 +416,18 @@ def tarot_tres_cartas():
             bruto["interpretacao"] = processar_interpretacao(bruto["interpretacao"])  
             resultado = bruto
     return render_template('produtos/tarot_tres_cartas.html', resultado=resultado)
+
+@app.route('/caminho_semana', methods=['GET', 'POST'])
+def caminho_semana():
+    partes = None
+    if request.method == 'POST':
+        pergunta = request.form.get('pergunta')  
+        if pergunta:
+            bruto = Gerar_Tarefa_semanal(pergunta, client)  
+            partes = processar_tarefas(bruto["interpretacao"])  
+            print("Partes processadas:", partes)  # Verifique o log
+
+    return render_template('produtos/caminho_semana.html', partes=partes)
 
 
 if __name__ == '__main__':

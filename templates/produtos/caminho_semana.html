@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Caminho da Alma</h1>
+    <p>O caminho da alma é uma sugestao de tarefas diarias, para alcancar objetivos especificos</p>
+    <form method="post" class="mb-4">
+        <div class="mb-3">
+            <label for="pergunta" class="form-label">Qual o é o seu desejo para essa semana?:</label>
+            <input type="text" id="pergunta" name="pergunta" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Enviar</button>
+    </form>
+
+    {% if partes %}
+        <div class="mt-4">
+            <h2>Tarefas da Semana</h2>
+            <ul class="list-group">
+                {% for i in range(1, 8) %}
+                    <li class="list-group-item">
+                        <strong>Tarefa do dia {{ i }}:</strong> {{ partes['tarefa_' + i|string] }}<br>
+                        <strong>Objetivo:</strong> {{ partes['descricao_' + i|string] }}
+                    </li>
+                {% endfor %}
+            </ul>
+            <h3 class="mt-4">Conclusão</h3>
+            <p>{{ partes.conclusao }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
